@@ -31,12 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning> {/* Suppress hydration warnings */}
-        <body className={`${geistSans.variable} ${geistMono.variable} ${hindSiliguri.variable}`}>
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    <ClerkProvider><html lang="en" suppressHydrationWarning>{/* Suppress hydration warnings */}
+      <body className={`${geistSans.variable} ${geistMono.variable} ${hindSiliguri.variable}`}>
+        {children}
+      </body>
+    </html></ClerkProvider>
   );
 }
