@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Hind_Siliguri } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
+import Navbar from '@/components/Navbar';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,10 +32,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider><html lang="en" suppressHydrationWarning>{/* Suppress hydration warnings */}
-      <body className={`${geistSans.variable} ${geistMono.variable} ${hindSiliguri.variable}`}>
-        {children}
-      </body>
-    </html></ClerkProvider>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${geistSans.variable} ${geistMono.variable} ${hindSiliguri.variable}`}>
+          <Navbar />
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
