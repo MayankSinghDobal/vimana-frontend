@@ -1,48 +1,56 @@
-"use client";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useAuth } from "@clerk/nextjs";
+'use client';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { AxiosError } from 'axios';
+import { useAuth } from '@clerk/nextjs';
 
 export default function Home() {
   const { isSignedIn } = useAuth();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pickup, setPickup] = useState("");
-  const [dropoff, setDropoff] = useState("");
+  const [pickup, setPickup] = useState('');
+  const [dropoff, setDropoff] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       if (!isSignedIn) {
-        setMessage("Please sign in to access the divine ride.");
+        setMessage('Please sign in to access the divine ride.');
         return;
       }
       try {
-        const response = await axios.get("http://localhost:3001/");
+        const response = await axios.get('http://localhost:3001/');
         setMessage(response.data);
       } catch (err) {
-        setError("Failed to fetch data from backend.");
+        setError('Failed to fetch data from backend.');
       }
     };
     fetchData();
   }, [isSignedIn]);
 
-  const handleBookRide = () => {
-    if (pickup && dropoff) {
-      alert(
-        `Ride booked from ${pickup} to ${dropoff}! (Backend integration pending)`
-      );
-    } else {
-      alert("Please enter both pickup and dropoff locations.");
-    }
-  };
-
+  const handleBookRide = async () => {
+  if (!pickup || !dropoff) {
+    alert('Please enter both pickup and dropoff locations.');
+    return;
+  }
+  try {
+    const response = await axios.post('http://localhost:3001/book-ride', {
+      pickup_location: pickup,
+      dropoff_location: dropoff,
+    });
+    alert(`Ride booked successfully! Ride ID: ${response.data.id}`);
+    setPickup('');
+    setDropoff('');
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>; // Refined type for data
+    const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+    alert(`Error booking ride: ${errorMessage}`);
+  }
+};
   return (
     <div className="min-h-screen bg-vimana-indigo text-white">
       {/* Header */}
       <header className="bg-vimana-crimson p-4">
-        <h1 className="text-2xl font-devanagari text-vimana-gold">
-          Vimana Ride-Hailing
-        </h1>
+        <h1 className="text-2xl font-devanagari text-vimana-gold">Vimana Ride-Hailing</h1>
         <p className="text-sm">Soar through the skies with divine precision</p>
       </header>
 
@@ -53,16 +61,12 @@ export default function Home() {
             Welcome to the Divine Journey
           </h2>
           <p className="mb-6 text-vimana-silver">
-            Book your celestial ride with Vimana, inspired by the mythical
-            chariots of the gods.
+            Book your celestial ride with Vimana, inspired by the mythical chariots of the gods.
           </p>
 
           {/* Ride Booking Form */}
           <div className="max-w-md mx-auto bg-vimana-silver bg-opacity-20 p-6 rounded-lg relative">
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-4 text-vimana-gold text-2xl">
-              🚂
-            </div>{" "}
-            {/* Chariot above form */}
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-4 text-vimana-gold text-2xl">🚂</div>
             <input
               type="text"
               placeholder="Pickup Location"
