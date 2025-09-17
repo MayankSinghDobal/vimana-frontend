@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning> {/* Suppress hydration warnings */}
         <body className={`${geistSans.variable} ${geistMono.variable} ${hindSiliguri.variable}`}>
           {children}
         </body>
