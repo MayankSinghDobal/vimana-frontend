@@ -1,11 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { AxiosError } from 'axios';
-import { useAuth } from '@clerk/nextjs';
+import axios, { AxiosError } from 'axios';
+import { useAuth } from '@clerk/nextjs'; // Only useAuth is needed
 
 export default function Home() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth(); // Destructure getToken from useAuth
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pickup, setPickup] = useState('');
@@ -28,24 +27,28 @@ export default function Home() {
   }, [isSignedIn]);
 
   const handleBookRide = async () => {
-  if (!pickup || !dropoff) {
-    alert('Please enter both pickup and dropoff locations.');
-    return;
-  }
-  try {
-    const response = await axios.post('http://localhost:3001/book-ride', {
-      pickup_location: pickup,
-      dropoff_location: dropoff,
-    });
-    alert(`Ride booked successfully! Ride ID: ${response.data.id}`);
-    setPickup('');
-    setDropoff('');
-  } catch (err) {
-    const error = err as AxiosError<{ message?: string }>; // Refined type for data
-    const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
-    alert(`Error booking ride: ${errorMessage}`);
-  }
-};
+    if (!pickup || !dropoff) {
+      alert('Please enter both pickup and dropoff locations.');
+      return;
+    }
+    try {
+      const token = await getToken(); // Use getToken from useAuth
+      const response = await axios.post('http://localhost:3001/book-ride', {
+        pickup_location: pickup,
+        dropoff_location: dropoff,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }, // Send token in header
+      });
+      alert(`Ride booked successfully! Ride ID: ${response.data.id}`);
+      setPickup('');
+      setDropoff('');
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+      alert(`Error booking ride: ${errorMessage}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-vimana-indigo text-white">
       {/* Header */}

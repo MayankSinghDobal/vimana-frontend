@@ -25,6 +25,14 @@ export default function Navbar() {
           </li>
           <li>
             <Link
+              href="/dashboard"
+              className="text-vimana-silver hover:text-vimana-gold"
+            >
+              Dashboard
+            </Link>
+          </li>
+          <li>
+            <Link
               href="/driver"
               className="text-vimana-silver hover:text-vimana-gold"
             >
