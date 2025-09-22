@@ -3,8 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --vimana-indigo: #1E1B4B; /* Deep indigo for celestial skies */
+  --vimana-gold: #FFD700; /* Golden hue for divine radiance */
+  --vimana-crimson: #8B0000; /* Crimson for sacred energy */
+  --vimana-silver: #C0C0C0; /* Silver for ethereal glow */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,7 +25,7 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Hind Siliguri', Arial, sans-serif; /* Mythology-inspired font */
+  font-family: 'Hind Siliguri', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -43,4 +45,17 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+/* Custom Mythology-Inspired Styles */
+.vimana-card {
+  @apply bg-vimana-silver bg-opacity-10 rounded-xl shadow-lg border border-vimana-gold/30 backdrop-blur-sm transition-all duration-300;
+}
+
+.vimana-button {
+  @apply bg-vimana-gold text-vimana-indigo px-6 py-3 rounded-full font-bold hover:bg-vimana-crimson hover:scale-105 transition-all duration-300;
+}
+
+.vimana-input {
+  @apply w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all;
 }
