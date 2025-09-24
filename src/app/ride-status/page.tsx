@@ -8,7 +8,7 @@ export default function RideStatus() {
   const rideStatus = {
     status: 'Requested',
     pickup: 'Mount Meru Temple',
-    dropoff: 'Indra’s Palace',
+    dropoff: 'Indras Palace',
     driver: 'Arjuna (Assigned)',
   };
 

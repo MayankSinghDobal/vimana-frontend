@@ -22,6 +22,8 @@ export default function Profile() {
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
 
   useEffect(() => {
     if (isSignedIn) {
@@ -37,6 +39,11 @@ export default function Profile() {
           setPhone(data.phone || '');
           setVehicleNumber(data.vehicle_number || '');
           setLicenseNumber(data.license_number || '');
+          // Load saved profile image from localStorage
+          const savedImage = localStorage.getItem(`profile_image_${userId}`);
+          if (savedImage) {
+            setProfileImage(savedImage);
+          }
         } catch (err: any) {
           console.error('Error fetching profile:', err);
           setError(err.response?.data?.message || err.response?.data?.error || 'Failed to load profile.');
@@ -46,7 +53,44 @@ export default function Profile() {
       };
       fetchProfile();
     }
-  }, [isSignedIn, getToken]);
+  }, [isSignedIn, getToken, userId]);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setUpdateMessage('Image size must be less than 5MB');
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        setUpdateMessage('Please select a valid image file');
+        return;
+      }
+
+      setImageUploading(true);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfileImage(result);
+        // Save to localStorage (in a real app, you'd upload to a server)
+        localStorage.setItem(`profile_image_${userId}`, result);
+        setImageUploading(false);
+        setUpdateMessage('Profile image updated successfully!');
+      };
+      reader.onerror = () => {
+        setImageUploading(false);
+        setUpdateMessage('Failed to upload image');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setProfileImage(null);
+    localStorage.removeItem(`profile_image_${userId}`);
+    setUpdateMessage('Profile image removed');
+  };
 
   const handleUpdateProfile = async () => {
     if (!name.trim()) {
@@ -93,7 +137,7 @@ export default function Profile() {
       <div className="min-h-screen bg-gradient-to-b from-vimana-indigo to-vimana-crimson text-white p-8">
         <p className="text-vimana-gold text-center text-2xl font-devanagari">Please sign in to access your profile.</p>
         <a
-          href="/rider/sign-in"
+          href="/sign-in"
           className="mt-4 block w-fit mx-auto bg-vimana-gold text-vimana-indigo px-6 py-3 rounded-full font-bold hover:bg-vimana-silver transition-all duration-300"
         >
           Sign In
@@ -108,98 +152,203 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-vimana-indigo to-vimana-crimson text-white p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-devanagari text-vimana-gold mb-6 text-center animate-pulse">Your Profile</h1>
         <p className="mb-6 text-vimana-silver text-center">Manage your divine identity, Celestial Traveler!</p>
+        
         {error && (
           <div className="bg-red-500/20 text-red-300 p-3 rounded-lg text-center border border-red-500/30 mb-6">
             {error}
           </div>
         )}
-        <div className="bg-vimana-silver bg-opacity-10 p-6 rounded-xl shadow-lg border border-vimana-gold/30 backdrop-blur-sm">
-          <div className="grid gap-4">
-            <div>
-              <label className="block text-vimana-gold mb-2">Name *</label>
-              <input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all"
-                disabled={updating}
-              />
-            </div>
-            <div>
-              <label className="block text-vimana-gold mb-2">Email</label>
-              <input
-                type="email"
-                value={profile?.email || ''}
-                className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg opacity-50"
-                disabled
-              />
-            </div>
-            <div>
-              <label className="block text-vimana-gold mb-2">Phone</label>
-              <input
-                type="text"
-                placeholder="Enter phone number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all"
-                disabled={updating}
-              />
-            </div>
-            <div>
-              <label className="block text-vimana-gold mb-2">Role</label>
-              <input
-                type="text"
-                value={profile?.role || ''}
-                className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg opacity-50"
-                disabled
-              />
-            </div>
-            {profile?.role === 'driver' && (
-              <>
-                <div>
-                  <label className="block text-vimana-gold mb-2">Vehicle Number *</label>
-                  <input
-                    type="text"
-                    placeholder="Enter vehicle number"
-                    value={vehicleNumber}
-                    onChange={(e) => setVehicleNumber(e.target.value)}
-                    className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all"
-                    disabled={updating}
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Profile Picture Section */}
+          <div className="bg-vimana-silver bg-opacity-10 p-6 rounded-xl shadow-lg border border-vimana-gold/30 backdrop-blur-sm">
+            <h2 className="text-2xl text-vimana-gold mb-4 text-center">Profile Picture</h2>
+            
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative">
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt="Profile"
+                    className="w-32 h-32 rounded-full object-cover border-4 border-vimana-gold shadow-lg"
                   />
-                </div>
-                <div>
-                  <label className="block text-vimana-gold mb-2">License Number *</label>
-                  <input
-                    type="text"
-                    placeholder="Enter license number"
-                    value={licenseNumber}
-                    onChange={(e) => setLicenseNumber(e.target.value)}
-                    className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all"
-                    disabled={updating}
-                  />
-                </div>
-              </>
-            )}
-            <button
-              onClick={handleUpdateProfile}
-              disabled={updating || !name.trim()}
-              className="w-full bg-vimana-gold text-vimana-indigo px-6 py-3 rounded-full font-bold hover:bg-vimana-crimson hover:text-white transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              {updating ? 'Updating...' : 'Update Profile'}
-            </button>
-            {updateMessage && (
-              <div className={`p-3 rounded-lg text-center font-medium ${
-                updateMessage.includes('successfully') 
-                  ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
-              }`}>
-                {updateMessage}
+                ) : (
+                  <div className="w-32 h-32 bg-vimana-gold/20 rounded-full flex items-center justify-center border-4 border-vimana-gold">
+                    <span className="text-4xl text-vimana-gold">👤</span>
+                  </div>
+                )}
+                {imageUploading && (
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                    <div className="animate-spin w-8 h-8 border-4 border-vimana-gold border-t-transparent rounded-full"></div>
+                  </div>
+                )}
               </div>
-            )}
+              
+              <div className="space-y-2 w-full">
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={imageUploading}
+                  />
+                  <div className="cursor-pointer bg-vimana-gold text-vimana-indigo px-4 py-2 rounded-full font-bold hover:bg-vimana-crimson hover:text-white transition-all duration-300 text-center text-sm">
+                    {profileImage ? 'Change Photo' : 'Upload Photo'}
+                  </div>
+                </label>
+                
+                {profileImage && (
+                  <button
+                    onClick={handleRemoveImage}
+                    className="w-full bg-red-500/20 text-red-300 px-4 py-2 rounded-full font-bold hover:bg-red-500/40 transition-all duration-300 text-sm"
+                  >
+                    Remove Photo
+                  </button>
+                )}
+                
+                <p className="text-xs text-vimana-silver text-center">
+                  Max 5MB • JPG, PNG, GIF
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Current Profile Display */}
+          <div className="bg-vimana-silver bg-opacity-10 p-6 rounded-xl shadow-lg border border-vimana-gold/30 backdrop-blur-sm">
+            <h2 className="text-2xl text-vimana-gold mb-4">Current Profile</h2>
+            
+            <div className="space-y-3">
+              <div className="p-3 bg-vimana-indigo/30 rounded-lg">
+                <label className="block text-vimana-gold text-sm mb-1">Name</label>
+                <p className="text-white">{profile?.name || 'Not set'}</p>
+              </div>
+              <div className="p-3 bg-vimana-indigo/30 rounded-lg">
+                <label className="block text-vimana-gold text-sm mb-1">Email</label>
+                <p className="text-white break-all">{profile?.email || 'Not set'}</p>
+              </div>
+              <div className="p-3 bg-vimana-indigo/30 rounded-lg">
+                <label className="block text-vimana-gold text-sm mb-1">Role</label>
+                <p className="text-white capitalize">{profile?.role || 'Not set'}</p>
+              </div>
+              <div className="p-3 bg-vimana-indigo/30 rounded-lg">
+                <label className="block text-vimana-gold text-sm mb-1">Phone</label>
+                <p className="text-white">{profile?.phone || 'Not set'}</p>
+              </div>
+              {profile?.role === 'driver' && (
+                <>
+                  <div className="p-3 bg-vimana-indigo/30 rounded-lg">
+                    <label className="block text-vimana-gold text-sm mb-1">Vehicle Number</label>
+                    <p className="text-white">{profile?.vehicle_number || 'Not set'}</p>
+                  </div>
+                  <div className="p-3 bg-vimana-indigo/30 rounded-lg">
+                    <label className="block text-vimana-gold text-sm mb-1">License Number</label>
+                    <p className="text-white">{profile?.license_number || 'Not set'}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Update Profile Form */}
+          <div className="bg-vimana-silver bg-opacity-10 p-6 rounded-xl shadow-lg border border-vimana-gold/30 backdrop-blur-sm">
+            <h2 className="text-2xl text-vimana-gold mb-4">Update Profile</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-vimana-gold mb-2">Name *</label>
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all"
+                  disabled={updating}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-vimana-gold mb-2">Email</label>
+                <input
+                  type="email"
+                  value={profile?.email || ''}
+                  className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg opacity-50"
+                  disabled
+                />
+                <p className="text-xs text-vimana-silver mt-1">Email cannot be changed here</p>
+              </div>
+              
+              <div>
+                <label className="block text-vimana-gold mb-2">Phone</label>
+                <input
+                  type="text"
+                  placeholder="Enter phone number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all"
+                  disabled={updating}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-vimana-gold mb-2">Role</label>
+                <input
+                  type="text"
+                  value={profile?.role || ''}
+                  className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg opacity-50"
+                  disabled
+                />
+                <p className="text-xs text-vimana-silver mt-1">Role cannot be changed after signup</p>
+              </div>
+              
+              {profile?.role === 'driver' && (
+                <>
+                  <div>
+                    <label className="block text-vimana-gold mb-2">Vehicle Number *</label>
+                    <input
+                      type="text"
+                      placeholder="Enter vehicle number"
+                      value={vehicleNumber}
+                      onChange={(e) => setVehicleNumber(e.target.value)}
+                      className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all"
+                      disabled={updating}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-vimana-gold mb-2">License Number *</label>
+                    <input
+                      type="text"
+                      placeholder="Enter license number"
+                      value={licenseNumber}
+                      onChange={(e) => setLicenseNumber(e.target.value)}
+                      className="w-full p-3 bg-vimana-indigo/50 text-white border border-vimana-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-vimana-gold transition-all"
+                      disabled={updating}
+                    />
+                  </div>
+                </>
+              )}
+              
+              <button
+                onClick={handleUpdateProfile}
+                disabled={updating || !name.trim()}
+                className="w-full bg-vimana-gold text-vimana-indigo px-6 py-3 rounded-full font-bold hover:bg-vimana-crimson hover:text-white transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {updating ? 'Updating...' : 'Update Profile'}
+              </button>
+              
+              {updateMessage && (
+                <div className={`p-3 rounded-lg text-center font-medium ${
+                  updateMessage.includes('successfully') 
+                    ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                    : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                }`}>
+                  {updateMessage}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
